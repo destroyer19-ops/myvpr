@@ -225,80 +225,82 @@ if ($stream_type == 'shared' && isset($stream_source_id) && isset($stream_key)) 
 }
 ?>
 <?php include 'includes/header.php'; ?>
+<link rel="stylesheet" href="assets/css/watch.css?v=<?php echo time(); ?>">
 
-<body>
+<body class="cinema-mode">
     <?php include 'includes/navbar.php'; ?>
 
-    <div class="container watch-container page-container">
-        <div class="row">
-            <div class="col-md-10 offset-md-1">
-                <h2 class="text-center"><?php echo $crusade_title; ?></h2>
-                <?php if (!isset($_SESSION['user_id'])): ?>
-                    <div class="alert alert-info text-center">
-                        Welcome! You can watch without an account. Create one to personalize chat and host your own watch parties.
-                        <div class="mt-2">
-                            <a href="register.php" class="btn btn-primary btn-sm mx-1">Create Account</a>
-                            <a href="login.php" class="btn btn-outline-primary btn-sm mx-1">Log In</a>
+    <div class="watch-page-wrapper">
+        <div class="cinema-container container-fluid">
+            <!-- Video Column -->
+            <div class="video-column">
+                <div class="video-player-wrapper">
+                    <?php if ($is_youtube && !empty($embed_url)): ?>
+                        <div class="ratio ratio-16x9">
+                            <iframe src="<?php echo htmlspecialchars($embed_url); ?>?autoplay=1" title="Stream Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                         </div>
-                    </div>
-                <?php endif; ?>
-                <?php if ($stream_type == 'shared'): ?>
-                    <p class="text-center text-muted mb-4">You're in a watch party hosted by <?php echo $shared_by; ?>!</p>
-                <?php endif; ?>
-                <?php if (isset($_GET['shared']) && $stream_type == 'shared' && isset($_SESSION['user_id']) && $_SESSION['user_id'] == $stream['user_id']): ?>
-                    <div class="alert alert-success text-center">
-                        <?php if ($_GET['shared'] === 'created'): ?>
-                            Your watch party link is ready. Use the buttons below to share it.
-                        <?php else: ?>
-                            You already have an active watch party link. Use the buttons below to share it.
-                        <?php endif; ?>
-                    </div>
-                <?php endif; ?>
-
-                <?php if ($is_youtube && !empty($embed_url)): ?>
-                    <div class="video-container ratio ratio-16x9">
-                        <iframe src="<?php echo htmlspecialchars($embed_url); ?>" title="Crusade Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                    </div>
-                <?php elseif (!empty($direct_video_url)): ?>
-                    <div class="video-container">
-                        <video id="videoPlayer" controls class="w-100"></video>
-                    </div>
-                <?php else: ?>
-                    <div class="alert alert-warning text-center">
-                        The live stream is not active at the moment, or the video URL is invalid. Please check back later.
-                    </div>
-                <?php endif; ?>
-
-
-
-                <div class="text-center mt-4">
-                    <?php if ($stream_type == 'shared'): ?>
-                        <button type="button" class="btn btn-secondary-custom btn-lg mt-2 mx-2" data-bs-toggle="modal" data-bs-target="#giveLifeModal" data-crusade-code="<?php echo htmlspecialchars($stream['crusade_code']); ?>">Give Your Life to Christ</button>
-                        <button type="button" class="btn btn-primary-custom btn-lg mt-2 mx-2" data-bs-toggle="modal" data-bs-target="#givingModal">Give Offerings & Partnership</button>
-                        <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $stream['user_id']) : ?>
-                            <div class="text-center mt-4 p-3 bg-dark rounded share-buttons">
-                                <h5 class="mb-3">Share this Watch Party!</h5>
-                                <button id="copy-link-btn" class="btn btn-light mx-2"><i class="fas fa-copy"></i> Copy Link</button>
-                                <a id="facebook-share-btn" href="#" class="btn btn-primary mx-2" target="_blank"><i class="fab fa-facebook"></i> Facebook</a>
-                                <a id="twitter-share-btn" href="#" class="btn btn-info text-white mx-2"><i class="fab fa-twitter"></i> Twitter</a>
-                                <a id="whatsapp-share-btn" href="#" class="btn btn-success mx-2" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-                                <button id="end-share-btn" class="btn btn-danger mx-2">End Share</button>
+                    <?php elseif (!empty($direct_video_url)): ?>
+                        <div class="ratio ratio-16x9">
+                            <video id="videoPlayer" controls class="w-100" autoplay></video>
+                        </div>
+                    <?php else: ?>
+                        <div class="p-5 text-center">
+                            <div class="alert alert-warning d-inline-block">
+                                <i class="fas fa-exclamation-triangle me-2"></i> The live stream is not active at the moment.
                             </div>
-                        <?php endif; ?>
-                    <?php else: // stream_type == 'live_tv' ?>
-                        <p class="text-center text-muted">You are watching a direct live stream.</p>
-                        <div class="d-flex justify-content-center flex-wrap mt-2">
-                            <button type="button" class="btn btn-secondary-custom btn-lg mt-2 mx-2" data-bs-toggle="modal" data-bs-target="#giveLifeModal">Give Your Life to Christ</button>
-                            <button type="button" class="btn btn-primary-custom btn-lg mt-2 mx-2" data-bs-toggle="modal" data-bs-target="#givingModal">Give Offerings & Partnership</button>
                         </div>
-                        <!-- Add generic share buttons for direct live streams if needed -->
                     <?php endif; ?>
                 </div>
 
-                <div class="comment-section-container mt-4">
-                    <div id="comments-section"></div>
+                <div class="stream-info-bar">
+                    <?php if ($stream_type == 'shared'): ?>
+                        <span class="shared-info-badge">
+                            <i class="fas fa-users me-1"></i> Watch Party by <?php echo $shared_by; ?>
+                        </span>
+                    <?php endif; ?>
+                    <h1 class="stream-title"><?php echo $crusade_title; ?></h1>
+                    <p class="text-muted"><?php echo nl2br(htmlspecialchars($crusade_description)); ?></p>
                 </div>
 
+                <!-- Floating Action Bar -->
+                <div class="action-strip">
+                    <button type="button" class="btn btn-cinema btn-give-life" data-bs-toggle="modal" data-bs-target="#giveLifeModal" <?php echo ($stream_type == 'shared') ? 'data-crusade-code="'.htmlspecialchars($stream['crusade_code']).'"' : ''; ?>>
+                        <i class="fas fa-heart me-2"></i> Give Life to Christ
+                    </button>
+                    <button type="button" class="btn btn-cinema btn-partnership" data-bs-toggle="modal" data-bs-target="#givingModal">
+                        <i class="fas fa-hand-holding-heart me-2"></i> Offerings & Partnership
+                    </button>
+                </div>
+
+                <?php if (isset($_SESSION['user_id']) && $stream_type == 'shared' && $_SESSION['user_id'] == $stream['user_id']) : ?>
+                    <div class="host-controls">
+                        <h5 class="text-center mb-3 text-muted small uppercase">Host Controls: Share this party</h5>
+                        <div class="d-flex justify-content-center flex-wrap gap-2">
+                            <button id="copy-link-btn" class="btn btn-sm btn-outline-light"><i class="fas fa-copy me-1"></i> Copy Link</button>
+                            <div class="social-icons-row">
+                                <a id="facebook-share-btn" href="#" class="social-icon-btn bg-facebook" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                                <a id="twitter-share-btn" href="#" class="social-icon-btn bg-twitter" target="_blank"><i class="fab fa-twitter"></i></a>
+                                <a id="whatsapp-share-btn" href="#" class="social-icon-btn bg-whatsapp" target="_blank"><i class="fab fa-whatsapp"></i></a>
+                            </div>
+                            <button id="end-share-btn" class="btn btn-sm btn-danger"><i class="fas fa-stop-circle me-1"></i> End Party</button>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Sidebar Column -->
+            <div class="sidebar-column">
+                <div class="p-3 border-bottom border-secondary">
+                    <h5 class="mb-0"><i class="fas fa-comments me-2 text-primary"></i> Live Interactions</h5>
+                </div>
+                <div class="comment-section-container">
+                    <?php if (!isset($_SESSION['user_id'])): ?>
+                        <div class="alert alert-dark small py-2 mb-3">
+                            <a href="login.php" class="text-primary fw-bold">Log in</a> to join the conversation.
+                        </div>
+                    <?php endif; ?>
+                    <div id="comments-section"></div>
+                </div>
             </div>
         </div>
     </div>
