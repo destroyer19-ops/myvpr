@@ -1,0 +1,7 @@
+I have addressed the `mysqli::prepare(): Couldn't fetch mysqli` warning you encountered on `create_meeting.php`.
+
+The issue was likely a PHP scoping problem where the `$conn` database connection variable, although initialized globally, wasn't being correctly recognized within the specific `if (isset($_SESSION['user_id']))` block in `includes/navbar.php`.
+
+I have modified `includes/navbar.php` to explicitly declare `global $conn;` before attempting to use the database connection for the subscription check. This ensures that the `$conn` variable is correctly accessible.
+
+Please try visiting `create_meeting.php` again after a hard refresh to confirm that the warning is gone. Let me know if you encounter any further issues!

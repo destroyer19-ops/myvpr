@@ -1,0 +1,7 @@
+Options -Indexes
+<FilesMatch "\.(php|phtml|phar|php3|php4|php5)$">
+    Deny from all
+</FilesMatch>
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+</IfModule>
