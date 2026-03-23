@@ -230,6 +230,14 @@ $body_classes = "d-flex justify-content-center align-items-center min-vh-100";
                 <h3>Welcome Back!</h3>
             </div>
             <div class="card-body">
+                <?php if (isset($_SESSION['success_message'])): ?>
+                    <div class="alert alert-success">
+                        <?php 
+                        echo $_SESSION['success_message']; 
+                        unset($_SESSION['success_message']);
+                        ?>
+                    </div>
+                <?php endif; ?>
                 <?php if (!empty($login_err)): ?>
                     <div class="alert alert-danger"><?php echo $login_err; ?></div>
                 <?php endif; ?>

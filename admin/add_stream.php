@@ -62,7 +62,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if (empty($thumbnail_err)) {
             if (move_uploaded_file($_FILES["thumbnail_file"]["tmp_name"], $target_file)) {
-                $thumbnail_url = "/uploads/thumbnails/" . $filename;
+                $thumbnail_url = "uploads/thumbnails/" . $filename;
             } else {
                 $thumbnail_err = "Sorry, there was an error uploading your file.";
             }

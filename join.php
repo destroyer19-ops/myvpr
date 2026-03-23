@@ -15,7 +15,7 @@ if (empty($meeting_code)) {
 }
 
 // Fetch meeting details
-$stmt = $conn->prepare("SELECT id, title FROM praise_meetings WHERE meeting_code = ?");
+$stmt = $conn->prepare("SELECT id, title, daily_room_url FROM praise_meetings WHERE meeting_code = ?");
 $stmt->bind_param("s", $meeting_code);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -28,6 +28,7 @@ if ($result->num_rows == 0) {
 $meeting = $result->fetch_assoc();
 $meeting_id = $meeting['id'];
 $meeting_title = $meeting['title'];
+$is_daily = !empty($meeting['daily_room_url']);
 
 // If the user is not logged in, redirect to the login page
 if (!isset($_SESSION['user_id'])) {
@@ -72,7 +73,7 @@ while ($row = $participants_result->fetch_assoc()) {
                         <p>You will be the first to join.</p>
                     <?php endif; ?>
                     
-                    <a href="meeting-room.php?code=<?php echo $meeting_code; ?>" class="btn btn-primary btn-lg mt-4">
+                    <a href="<?php echo $is_daily ? 'meeting-room-daily.php' : 'meeting-room.php'; ?>?code=<?php echo $meeting_code; ?>" class="btn btn-primary btn-lg mt-4">
                         <i class="fas fa-video me-2"></i>Join Now
                     </a>
                 </div>

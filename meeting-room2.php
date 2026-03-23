@@ -2,15 +2,21 @@
 ini_set("display_errors", 1);
 require_once 'includes/session.php';
 session_init();
-if (!isset($_SESSION['user_id'])) {
+
+$is_admin = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+if (!isset($_SESSION['user_id']) && !$is_admin) {
   header('Location: login.php');
   exit;
 }
 
+$start_time = time(); 
+$end_time = $start_time + (24 * 60 * 60); // 24 hours
+$remaining_time = $end_time - $start_time;
+
 // Check if there's a meeting code in the URL
 $join_code = isset($_GET['code']) ? $_GET['code'] : '';
-$user_name = isset($_SESSION['username']) ? $_SESSION['username'] : 'Guest';
-$user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['username'] ?? $_SESSION['admin_username'] ?? 'Guest';
+$user_id = $_SESSION['user_id'] ?? 0;
 ?>
 <?php include 'includes/header.php'; ?>
 <body>
@@ -133,7 +139,7 @@ $user_id = $_SESSION['user_id'];
 
             jitsiApi.addEventListener('readyToClose', () => {
                 endMeeting();
-                window.location.href = 'index.php';
+                window.location.href = "<?php echo $is_admin ? 'admin/manage_meetings.php' : 'index.php'; ?>";
             });
         }
 
@@ -187,12 +193,16 @@ $user_id = $_SESSION['user_id'];
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body: `meeting_id=${currentMeetingCode}&csrf_token=${encodeURIComponent(csrfToken)}`
+            }).then(() => {
+                window.location.href = "<?php echo $is_admin ? 'admin/manage_meetings.php' : 'index.php'; ?>";
+            }).catch(() => {
+                window.location.href = "<?php echo $is_admin ? 'admin/manage_meetings.php' : 'index.php'; ?>";
             });
         }
 
         if (currentMeetingCode) {
             loadMeet(currentMeetingCode);
-            document.getElementById('meetingLinkInput').value = `${window.location.origin}/virtual-praise-room/join.php?code=${currentMeetingCode}`;
+            document.getElementById('meetingLinkInput').value = `${window.location.origin}/join.php?code=${currentMeetingCode}`;
         } else {
             // Handle case where there is no meeting code
             // Maybe redirect to a page to create or join a meeting

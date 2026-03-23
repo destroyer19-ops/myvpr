@@ -152,12 +152,19 @@ $username = $is_logged_in ? $_SESSION['username'] : '';
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <div class="social-icons">
+            <div class="social-icons mb-3">
                 <a href="#"><i class="fab fa-facebook-f"></i></a>
                 <a href="#"><i class="fab fa-twitter"></i></a>
                 <a href="#"><i class="fab fa-instagram"></i></a>
             </div>
-            <p class="mt-3">&copy; 2025 Virtual Praise Room. All Rights Reserved.</p>
+            <p class="mb-0">&copy; 2026 Virtual Praise Room. All Rights Reserved.</p>
+            <p class="small text-muted mb-3">Loveworld City, Asese, Ogun State, Nigeria</p>
+            <ul class="list-inline footer-links">
+                <li class="list-inline-item"><a href="#">Privacy Policy</a></li>
+                <li class="list-inline-item"><a href="#">Terms of Service</a></li>
+                <li class="list-inline-item"><a href="about.php">About Us</a></li>
+                <li class="list-inline-item"><a href="contact.php">Contact</a></li>
+            </ul>
         </div>
     </footer>
 

@@ -10,7 +10,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ms-auto align-items-center">
                 <li class="nav-item">
-                    <a class="btn btn-outline-light" href="give_life_to_christ.php" role="button">Give Life to Christ</a>
+                    <a class="btn btn-outline-light" href="give_life_to_christ.php" role="button">Give Your Life to Christ</a>
                 </li>
                 <?php if (isset($_SESSION['user_id'])) : ?>
                     <li class="nav-item">

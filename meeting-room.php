@@ -2,7 +2,9 @@
 ini_set("display_errors", 1);
 require_once 'includes/session.php';
 session_init();
-if (!isset($_SESSION['user_id'])) {
+
+$is_admin = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
+if (!isset($_SESSION['user_id']) && !$is_admin) {
     header('Location: login.php');
     exit;
 }
@@ -11,8 +13,8 @@ require_once 'includes/db.php';
 
 // Check if there's a meeting code in the URL
 $join_code = isset($_GET['code']) ? $_GET['code'] : '';
-$user_name = isset($_SESSION['username']) ? $_SESSION['username'] : 'Guest';
-$user_id = $_SESSION['user_id'];
+$user_name = $_SESSION['username'] ?? $_SESSION['admin_username'] ?? 'Guest';
+$user_id = $_SESSION['user_id'] ?? 0;
 
 // Get meeting details
 $stmt = $conn->prepare("SELECT * FROM praise_meetings WHERE meeting_code = ?");
@@ -26,8 +28,8 @@ if (!$meeting) {
     die('Meeting not found.');
 }
 
-$start_time = strtotime($meeting['start_time']);
-$end_time = $start_time + (15 * 60); // 15 minutes
+$start_time = strtotime($meeting['created_at']);
+$end_time = $start_time + (24 * 60 * 60); // 24 hours default duration
 $remaining_time = $end_time - time();
 
 ?>
@@ -157,7 +159,7 @@ $remaining_time = $end_time - time();
 
             jitsiApi.addEventListener('readyToClose', () => {
                 endMeeting();
-                window.location.href = 'index.php';
+                window.location.href = "<?php echo $is_admin ? 'admin/manage_meetings.php' : 'index.php'; ?>";
             });
         }
 
@@ -217,6 +219,10 @@ $remaining_time = $end_time - time();
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 body: `meeting_id=${currentMeetingCode}&csrf_token=${encodeURIComponent(csrfToken)}`
+            }).then(() => {
+                window.location.href = "<?php echo $is_admin ? 'admin/manage_meetings.php' : 'index.php'; ?>";
+            }).catch(() => {
+                window.location.href = "<?php echo $is_admin ? 'admin/manage_meetings.php' : 'index.php'; ?>";
             });
         }
 

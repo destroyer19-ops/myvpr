@@ -67,9 +67,18 @@ if (isset($_SESSION['user_id'])) {
                         </a>
                     </li>
                 <?php endif; ?>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle <?php echo ($current_page == 'about.php' || $current_page == 'contact.php') ? 'active' : ''; ?>" href="#" id="infoDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Info
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="infoDropdown">
+                        <li><a class="dropdown-item <?php echo ($current_page == 'about.php') ? 'active' : ''; ?>" href="about.php">About Us</a></li>
+                        <li><a class="dropdown-item <?php echo ($current_page == 'contact.php') ? 'active' : ''; ?>" href="contact.php">Contact</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item">
                     <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#giveLifeModal">
-                        Give Life to Christ
+                        Give Your Life to Christ
                     </button>
                 </li>
                 <li class="nav-item ms-3">
@@ -82,10 +91,6 @@ if (isset($_SESSION['user_id'])) {
                 </li>
 
                 <?php if (isset($_SESSION['user_id'])) : ?>
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo ($current_page == 'dashboard.php') ? 'active' : ''; ?>" href="dashboard.php">Dashboard</a>
-                    </li>
-
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="watchDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             Watch
@@ -102,17 +107,19 @@ if (isset($_SESSION['user_id'])) {
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="createDropdown">
                             <li><a class="dropdown-item" href="create_crusade.php">Create Crusade</a></li>
-                            <li><a class="dropdown-item" href="create_meeting.php">Create Worship Cloud</a></li>
-                            <li><a class="dropdown-item" href="create_praise_session.php">Create Meeting</a></li>
+                            <li><a class="dropdown-item" href="create_meeting.php">Create Meeting</a></li>
+                            <li><a class="dropdown-item" href="create_praise_session.php">Create Worship Cloud</a></li>
                             <li><a class="dropdown-item" href="share_testimony.php">Share Testimony</a></li>
                         </ul>
                     </li>
 
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="accountDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <?php echo htmlspecialchars($_SESSION['username']); ?>
+                            <i class="fas fa-user-circle me-1"></i> <?php echo htmlspecialchars($_SESSION['username']); ?>
                         </a>
-                        <ul class="dropdown-menu" aria-labelledby="accountDropdown">
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                            <li><a class="dropdown-item <?php echo ($current_page == 'dashboard.php') ? 'active' : ''; ?>" href="dashboard.php"><i class="fas fa-th-large me-2"></i>Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <?php if (isset($_SESSION['current_meeting_code'])) : ?>
                                 <li><a class="dropdown-item" href="meeting-room.php?code=<?php echo htmlspecialchars($_SESSION['current_meeting_code']); ?>">My Current Meeting</a></li>
                             <?php endif; ?>
@@ -121,7 +128,7 @@ if (isset($_SESSION['user_id'])) {
                             <?php endif; ?>
                             <li><a class="dropdown-item" href="quarterly_wrap.php">Quarterly Wrap</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="logout.php">Logout</a></li>
+                            <li><a class="dropdown-item text-danger" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                         </ul>
                     </li>
 

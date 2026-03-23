@@ -11,6 +11,17 @@ if (session_status() == PHP_SESSION_NONE) {
 
 
 
+require_once 'includes/db.php';
+
+// Fetch the latest live stream for the cinematic hero background
+$hero_stream = null;
+$stmt_hero = $conn->prepare("SELECT * FROM praise_live_tv WHERE is_live = 1 ORDER BY created_at DESC LIMIT 1");
+if ($stmt_hero) {
+    $stmt_hero->execute();
+    $hero_stream = $stmt_hero->get_result()->fetch_assoc();
+    $stmt_hero->close();
+}
+
 // Check if user is logged in
 $is_logged_in = isset($_SESSION['user_id']);
 $username = $is_logged_in ? $_SESSION['username'] : 'Guest';
@@ -18,35 +29,237 @@ $current_crusade_code = $_SESSION['current_crusade_code'] ?? '';
 $current_meeting_code = $_SESSION['current_meeting_code'] ?? '';
 ?>
 <style>
-        body {
-            padding-top: 0 !important;
+    body {
+        padding-top: 0 !important;
+    }
+    .navbar {
+        background: transparent !important;
+        box-shadow: none !important;
+        transition: all 0.4s ease-in-out;
+        padding: 20px 0;
+    }
+    .navbar.navbar-scrolled {
+        background: rgba(2, 12, 27, 0.95) !important;
+        backdrop-filter: blur(10px);
+        padding: 10px 0;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.3) !important;
+    }
+    .navbar .nav-link, .navbar .navbar-brand {
+        color: #fff !important;
+    }
+    .navbar.navbar-scrolled .nav-link, .navbar.navbar-scrolled .navbar-brand {
+        color: #fff !important;
+    }
+    .hero-section {            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            background: #000;
+            padding: 0 !important;
+        }
+        .hero-video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            object-fit: cover;
+        }
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 50%, transparent 100%),
+                linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 20%, transparent 50%);
+            z-index: 2;
+        }
+        .hero-content-wrapper {
+            position: relative;
+            z-index: 3;
+            color: #fff;
+            width: 100%;
+        }
+        .hero-content {
+            text-align: left !important;
+            padding-left: 0;
+        }
+        .hero-content h1 {
+            color: #fff !important;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+        .hero-content p {
+            color: rgba(255,255,255,0.8) !important;
+            max-width: 600px;
+        }
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid rgba(220, 53, 69, 0.5);
+            color: #ff4d5e;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff4d5e;
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 10px #ff4d5e;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        @media (max-width: 991px) {
+            .hero-section {
+                min-height: 80vh;
+                padding-top: 80px !important;
+            }
+            .hero-overlay {
+                background: 
+                    linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.9) 100%),
+                    linear-gradient(to right, rgba(0,0,0,0.7) 0%, transparent 100%);
+            }
+            .hero-content {
+                text-align: center !important;
+                margin: 0 auto;
+                padding: 0 15px;
+            }
+            .hero-content h1 {
+                font-size: 2.5rem !important;
+            }
+            .hero-content p {
+                font-size: 1rem !important;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .live-indicator {
+                font-size: 0.7rem;
+                padding: 3px 10px;
+            }
+            .d-flex.flex-wrap.gap-3 {
+                justify-content: center;
+            }
+            .navbar {
+                padding: 10px 0;
+                background: rgba(0,0,0,0.5) !important;
+            }
+        }
+        @media (max-width: 576px) {
+            .hero-section {
+                min-height: 70vh;
+            }
+            .hero-content h1 {
+                font-size: 2rem !important;
+            }
+            .btn-lg {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 <?php include 'includes/header.php'; ?>
+<!-- HLS.js for .m3u8 live feeds -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <body>
     <?php include 'includes/navbar.php'; ?>
     <!-- Hero Section -->
     <section class="hero-section" id="hero-section">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-7 mx-auto text-center">
+        <?php if ($hero_stream): ?>
+            <!-- Video Background -->
+            <?php 
+                $video_url = $hero_stream['stream_url'];
+                $is_youtube = (strpos($video_url, 'youtube.com/watch') !== false || strpos($video_url, 'youtu.be/') !== false);
+                if ($is_youtube) {
+                    $video_id = '';
+                    if (strpos($video_url, 'youtube.com/watch') !== false) {
+                        $query = parse_url($video_url, PHP_URL_QUERY);
+                        parse_str($query ?? '', $params);
+                        $video_id = $params['v'] ?? '';
+                    } else {
+                        $video_id = ltrim(parse_url($video_url, PHP_URL_PATH), '/');
+                    }
+                    $embed_url = "https://www.youtube.com/embed/{$video_id}?autoplay=1&mute=1&controls=0&loop=1&playlist={$video_id}&rel=0&showinfo=0";
+                }
+            ?>
+            <?php if ($is_youtube): ?>
+                <iframe class="hero-video-bg" src="<?php echo $embed_url; ?>" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="pointer-events: none;"></iframe>
+            <?php else: ?>
+                <video class="hero-video-bg" autoplay muted loop playsinline id="heroVideo">
+                    <source src="<?php echo htmlspecialchars($video_url); ?>" type="application/x-mpegURL">
+                </video>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        var video = document.getElementById('heroVideo');
+                        if (!video) return;
+                        var videoSrc = "<?php echo $video_url; ?>";
+                        if (Hls.isSupported()) {
+                            var hls = new Hls();
+                            hls.loadSource(videoSrc);
+                            hls.attachMedia(video);
+                            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                                video.play().catch(function(error) {
+                                    console.log("Autoplay blocked or failed:", error);
+                                });
+                            });
+                        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                            video.src = videoSrc;
+                            video.addEventListener('loadedmetadata', function() {
+                                video.play().catch(function(error) {
+                                    console.log("Autoplay blocked or failed:", error);
+                                });
+                            });
+                        }
+                    });
+                </script>
+            <?php endif; ?>
+        <?php else: ?>
+            <img src="assets/img/bg34.jpg" class="hero-video-bg" alt="Hero Background">
+        <?php endif; ?>
+
+        <div class="hero-overlay"></div>
+
+        <div class="container hero-content-wrapper">
+            <div class="row">
+                <div class="col-lg-7">
                     <div class="hero-content">
-                        <h1 class="display-3 fw-bold mb-4" data-aos="fade-up" data-aos-duration="1000">Praise, Worship, and Connection.</h1>
-                        <p class="lead mb-5" data-aos="fade-up" data-aos-duration="1200" data-aos-delay="200">Experience the joy of fellowship and connect with your community in a virtual space designed for praise.</p>
-                        <?php if ($is_logged_in): ?>
-                            <a href="meeting-room.php" class="btn btn-primary-custom btn-lg me-3 cta-button-test" data-aos="fade-up" data-aos-duration="1400" data-aos-delay="400">Start a Meeting</a>
-                            <a href="live_crusade.php" class="btn btn-secondary-custom btn-lg cta-button-test" data-aos="fade-up" data-aos-duration="1400" data-aos-delay="500">Watch Live Crusade</a>
-                        <?php else: ?>
-                            <div class="d-grid gap-2 d-md-block">
-                                <a href="register.php" class="btn btn-primary-custom btn-lg me-md-3 cta-button-test" data-aos="fade-up" data-aos-duration="1400" data-aos-delay="400">Get Started</a>
-                                <a href="login.php" class="btn btn-secondary-custom btn-lg cta-button-test" data-aos="fade-up" data-aos-duration="1400" data-aos-delay="500">Sign In</a>
+                        <?php if ($hero_stream): ?>
+                            <div class="live-indicator" data-aos="fade-down">
+                                <span class="live-dot"></span>
+                                Currently Broadcasting: <?php echo htmlspecialchars($hero_stream['title']); ?>
                             </div>
                         <?php endif; ?>
+                        
+                        <h1 class="display-3 fw-bold mb-4" data-aos="fade-up" data-aos-duration="1000">Praise, Worship, and Connection.</h1>
+                        <p class="lead mb-5" data-aos="fade-up" data-aos-duration="1200" data-aos-delay="200">Experience the joy of fellowship and connect with your community in a virtual space designed for praise.</p>
+                        
+                        <div class="d-flex flex-wrap gap-3" data-aos="fade-up" data-aos-duration="1400" data-aos-delay="400">
+                            <?php if ($is_logged_in): ?>
+                                <a href="create_meeting.php" class="btn btn-primary-custom btn-lg cta-button-test">Create Meeting</a>
+                                <a href="live_tv.php" class="btn btn-outline-light btn-lg">Watch Live TV</a>
+                            <?php else: ?>
+                                <a href="register.php" class="btn btn-primary-custom btn-lg cta-button-test">Join the Community</a>
+                                <a href="login.php" class="btn btn-outline-light btn-lg">Sign In</a>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </section>
 
     <?php if ($is_logged_in): ?>
@@ -246,13 +459,14 @@ $current_meeting_code = $_SESSION['current_meeting_code'] ?? '';
             <div class="row">
                 <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
                     <p class="mb-0">&copy; 2026 Virtual Praise Room. All Rights Reserved.</p>
+                    <p class="small text-muted mb-0">Loveworld City, Asese, Ogun State, Nigeria</p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
                     <ul class="list-inline footer-links">
                         <li class="list-inline-item"><a href="#">Privacy Policy</a></li>
                         <li class="list-inline-item"><a href="#">Terms of Service</a></li>
-                        <li class="list-inline-item"><a href="#">About Us</a></li>
-                        <li class="list-inline-item"><a href="#">Contact</a></li>
+                        <li class="list-inline-item"><a href="about.php">About Us</a></li>
+                        <li class="list-inline-item"><a href="contact.php">Contact</a></li>
                     </ul>
                 </div>
             </div>
@@ -261,3 +475,20 @@ $current_meeting_code = $_SESSION['current_meeting_code'] ?? '';
 
     <?php include 'includes/bottom_navbar.php'; ?>
     <?php include 'includes/footer.php'; ?>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navbar = document.querySelector('.navbar');
+            
+            function handleScroll() {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('navbar-scrolled');
+                } else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            }
+
+            window.addEventListener('scroll', handleScroll);
+            handleScroll(); // Initial check
+        });
+    </script>

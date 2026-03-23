@@ -265,7 +265,7 @@ if ($stream_type == 'shared' && isset($stream_source_id) && isset($stream_key)) 
                 <!-- Floating Action Bar -->
                 <div class="action-strip">
                     <button type="button" class="btn btn-cinema btn-give-life" data-bs-toggle="modal" data-bs-target="#giveLifeModal" <?php echo ($stream_type == 'shared') ? 'data-crusade-code="'.htmlspecialchars($stream['crusade_code']).'"' : ''; ?>>
-                        <i class="fas fa-heart me-2"></i> Give Life to Christ
+                        <i class="fas fa-heart me-2"></i> Give Your Life to Christ
                     </button>
                     <button type="button" class="btn btn-cinema btn-partnership" data-bs-toggle="modal" data-bs-target="#givingModal">
                         <i class="fas fa-hand-holding-heart me-2"></i> Offerings & Partnership

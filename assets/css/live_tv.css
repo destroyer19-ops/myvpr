@@ -2,16 +2,17 @@
 /* assets/css/live_tv.css */
 
 :root {
-    --cinematic-bg: #101010;
-    --cinematic-card-bg: #1c1c1c;
+    --cinematic-bg: linear-gradient(135deg, #001f3f 0%, #000000 100%);
+    --cinematic-card-bg: rgba(28, 28, 28, 0.8);
     --cinematic-text: #f0f0f0;
     --live-dot-color: #ff0000;
     --brand-glow-color: rgba(22, 133, 255, 0.5);
 }
 
 body {
-    background-color: var(--cinematic-bg);
+    background: var(--cinematic-bg) fixed !important;
     color: var(--cinematic-text);
+    min-height: 100vh;
 }
 
 /* Featured Cinematic Hero Section */
@@ -37,7 +38,9 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.1) 60%);
+    background: 
+        linear-gradient(to right, rgba(0,0,0,0.8) 0%, transparent 60%),
+        linear-gradient(to top, rgba(0,0,0,0.9) 20%, rgba(0,0,0,0.1) 60%);
 }
 
 .hero-content {

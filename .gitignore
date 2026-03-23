@@ -1,5 +1,10 @@
 # IDE files
 .idea/
+.DS_Store
 
 # Log files
 logs/
+
+# Configuration files
+includes/config.php
+.env

@@ -2,14 +2,35 @@
 ini_set("display_errors", 1);
 require_once 'includes/session.php';
 session_init();
-if (!isset($_SESSION['user_id'])) {
+$is_admin = (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true);
+if (!isset($_SESSION['user_id']) && !$is_admin) {
   header('Location: login.php');
   exit;
 }
 
 require_once 'includes/db.php';
 
-$user_id = $_SESSION['user_id'];
+$user_id = $_SESSION['user_id'] ?? 0;
+
+// Resolve user_id for admins if needed
+if ($user_id === 0 && $is_admin) {
+    $admin_username = $_SESSION['admin_username'] ?? 'admin';
+    $stmt_u = $conn->prepare("SELECT id FROM praise_users WHERE username = ? LIMIT 1");
+    $stmt_u->bind_param("s", $admin_username);
+    $stmt_u->execute();
+    $res_u = $stmt_u->get_result();
+    if ($row_u = $res_u->fetch_assoc()) {
+        $user_id = $row_u['id'];
+    } else {
+        $res_f = $conn->query("SELECT id FROM praise_users ORDER BY id ASC LIMIT 1");
+        if ($row_f = $res_f->fetch_assoc()) {
+            $user_id = $row_f['id'];
+        }
+    }
+    $stmt_u->close();
+}
+
+$display_name = $_SESSION['username'] ?? $_SESSION['admin_username'] ?? 'Esteemed User';
 
 // Check subscription status for the logged-in user
 $is_subscribed = false;
@@ -80,6 +101,17 @@ while ($row = $result_past->fetch_assoc()) {
 }
 $stmt_past->close();
 
+// Fetch meetings for the current user
+$user_meetings = [];
+$stmt_meetings = $conn->prepare("SELECT * FROM praise_meetings WHERE user_id = ? ORDER BY created_at DESC");
+$stmt_meetings->bind_param("i", $user_id);
+$stmt_meetings->execute();
+$result_meetings = $stmt_meetings->get_result();
+while ($row = $result_meetings->fetch_assoc()) {
+    $user_meetings[] = $row;
+}
+$stmt_meetings->close();
+
 ?>
 <?php include 'includes/header.php'; ?>
 <body>
@@ -112,7 +144,7 @@ $stmt_past->close();
         <?php endif; ?>
         <section class="dashboard-hero-section">
             <div class="container text-center dashboard-hero-content">
-                <h2 class="display-5 fw-bold mb-3">Welcome, Esteemed <?php echo htmlspecialchars($_SESSION['username']); ?>!</h2>
+                <h2 class="display-5 fw-bold mb-3">Welcome, Esteemed <?php echo htmlspecialchars($display_name); ?>!</h2>
                 <p class="lead mb-4">Your central hub for managing crusades, meetings, and connecting with your community.</p>
                 <div class="dashboard-actions">
                     <a href="create_crusade.php" class="btn btn-light btn-lg">Create Crusade</a>
@@ -259,6 +291,50 @@ $stmt_past->close();
                             <?php endif; ?>
                         </div>
                     </div>
+                </div>
+
+                <div class="custom-card p-4 mt-5">
+                    <h2 class="card-title mb-4">Your Meetings</h2>
+                    <?php if (!empty($user_meetings)): ?>
+                        <div class="table-responsive">
+                            <table class="table custom-table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Code</th>
+                                        <th>Platform</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($user_meetings as $meeting): ?>
+                                        <?php $is_daily = !empty($meeting['daily_room_url']); ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($meeting['title']); ?></td>
+                                            <td><code><?php echo htmlspecialchars($meeting['meeting_code']); ?></code></td>
+                                            <td>
+                                                <?php if ($is_daily): ?>
+                                                    <span class="badge bg-success">Daily.co</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-primary">KingsConference</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?php echo (new DateTime($meeting['created_at']))->format('M j, g:i A'); ?></td>
+                                            <td>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    <a href="<?php echo $is_daily ? 'meeting-room-daily.php' : 'meeting-room.php'; ?>?code=<?php echo $meeting['meeting_code']; ?>" class="btn btn-secondary btn-sm">Join</a>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm copy-link-btn" data-link="join.php?code=<?php echo $meeting['meeting_code']; ?>">Copy Link</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-center">No meetings found. <a href="create_meeting.php">Start one now!</a></p>
+                    <?php endif; ?>
                 </div>
 
             </div>

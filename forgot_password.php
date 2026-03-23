@@ -28,7 +28,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $email = sanitize(trim($_POST["email"]));
 
         // Check if email exists
-        $sql = "SELECT id FROM praise_users WHERE email = ?";
+        $sql = "SELECT id, username FROM praise_users WHERE email = ?";
         if ($stmt = $conn->prepare($sql)) {
             $stmt->bind_param("s", $param_email);
             $param_email = $email;
@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($stmt->execute()) {
                 $stmt->store_result();
                 if ($stmt->num_rows == 1) {
-                    $stmt->bind_result($user_id);
+                    $stmt->bind_result($user_id, $db_username);
                     $stmt->fetch();
 
                     // Generate a unique reset token
@@ -49,19 +49,45 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     if ($update_stmt = $conn->prepare($update_sql)) {
                         $update_stmt->bind_param("ssi", $hashed_reset_token, $expiry_time, $user_id);
                         if ($update_stmt->execute()) {
-                            // Send email with reset link
-                            // IMPORTANT: In a real application, replace this with actual email sending logic
-                            // using a library like PHPMailer or a transactional email service.
-                            $reset_link = "http://" . $_SERVER['HTTP_HOST'] . "/reset_password.php?token=" . $reset_token . "&email=" . urlencode($email);
-                            $success_message = "If an account with that email address exists, a password reset link has been sent to your email. Please check your inbox (and spam folder).";
+                            // Send email with reset link using Brevo
+                            require_once 'includes/mail_helper.php';
                             
-                            // For demonstration, logging the link
-                            error_log("Password reset link for $email: $reset_link");
+                            $reset_link = "http://" . $_SERVER['HTTP_HOST'] . "/reset_password.php?token=" . $reset_token . "&email=" . urlencode($email);
+                            
+                            $subject = "Password Reset - Virtual Praise Room";
+                            $html_content = "
+                                <html>
+                                <head>
+                                    <title>Password Reset</title>
+                                </head>
+                                <body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>
+                                    <div style='max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;'>
+                                        <h2 style='color: #007bff; text-align: center;'>Virtual Praise Room</h2>
+                                        <p>Hello <strong>" . htmlspecialchars($db_username) . "</strong>,</p>
+                                        <p>You recently requested to reset your password for your Virtual Praise Room account associated with the username: <strong>" . htmlspecialchars($db_username) . "</strong>. Click the button below to reset it:</p>
+                                        <div style='text-align: center; margin: 30px 0;'>
+                                            <a href='$reset_link' style='background-color: #007bff; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Reset Your Password</a>
+                                        </div>
+                                        <p>If you did not request a password reset, please ignore this email. This link is valid for 1 hour.</p>
+                                        <p>Best regards,<br>The Virtual Praise Room Team</p>
+                                        <hr style='border: none; border-top: 1px solid #eee; margin: 20px 0;'>
+                                        <p style='font-size: 0.8rem; color: #888;'>If you're having trouble clicking the password reset button, copy and paste the URL below into your web browser:</p>
+                                        <p style='font-size: 0.8rem; color: #888; word-break: break-all;'>$reset_link</p>
+                                    </div>
+                                </body>
+                                </html>
+                            ";
 
-                            // In a real app, you would send an actual email here:
-                            /*
-                            mail($email, "Password Reset for Virtual Praise Room", "Click this link to reset your password: $reset_link");
-                            */
+                            $result = send_brevo_email($email, $db_username, $subject, $html_content);
+
+                            if ($result['success']) {
+                                $success_message = "A password reset link has been sent to your email. Please check your inbox (and spam folder).";
+                            } else {
+                                // If email sending fails, we might still want to show a generic success for security, 
+                                // but log the internal error.
+                                error_log("Brevo Email Sending Failed: " . $result['message']);
+                                $success_message = "If an account with that email address exists, a password reset link has been sent to your email. Please check your inbox.";
+                            }
 
                         } else {
                             error_log("Error updating reset token: " . $update_stmt->error);

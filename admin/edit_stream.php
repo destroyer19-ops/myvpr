@@ -67,10 +67,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if (empty($thumbnail_err)) {
             if (move_uploaded_file($_FILES["thumbnail_file"]["tmp_name"], $target_file)) {
-                $new_thumbnail_path = "/uploads/thumbnails/" . $filename;
+                $new_thumbnail_path = "uploads/thumbnails/" . $filename;
                 // Delete old thumbnail if it exists
-                if (!empty($current_thumbnail) && file_exists(__DIR__ . '/..' . $current_thumbnail)) {
-                    unlink(__DIR__ . '/..' . $current_thumbnail);
+                if (!empty($current_thumbnail) && file_exists(__DIR__ . '/../' . $current_thumbnail)) {
+                    unlink(__DIR__ . '/../' . $current_thumbnail);
                 }
             } else {
                 $thumbnail_err = "Sorry, there was an error uploading your file.";

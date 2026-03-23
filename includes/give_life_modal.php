@@ -1,4 +1,4 @@
-<!-- Give Life to Christ Modal -->
+<!-- Give Your Life to Christ Modal -->
 <div class="modal fade" id="giveLifeModal" tabindex="-1" aria-labelledby="giveLifeModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">

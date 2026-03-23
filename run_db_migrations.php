@@ -41,6 +41,7 @@ function _columnExists(mysqli $conn, string $tableName, string $columnName): boo
 // --- Main Migration Logic ---
 
 $migration_files = [
+    /*
     __DIR__ . '/update_database_monetization.sql',
     __DIR__ . '/update_database_stats_and_admins.sql',
     __DIR__ . '/add_auth_columns.sql', // New migration file
@@ -52,6 +53,9 @@ $migration_files = [
     __DIR__ . '/update_database_comments.sql',
     __DIR__ . '/update_database_gift_subscriptions.sql',
     __DIR__ . '/update_database_salvation_gifts.sql',
+    __DIR__ . '/add_thumbnail_columns.sql',
+    */
+    __DIR__ . '/add_daily_room_column.sql', // Daily.co migration
     // Add other migration files here in order
 ];
 

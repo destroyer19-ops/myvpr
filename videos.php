@@ -158,7 +158,7 @@ if ($lang_result && $lang_result->num_rows > 0) {
                                     <?php foreach ($videos as $video): ?>
                                         <a href="create_crusade.php?video_url=<?php echo urlencode($video['video_url']); ?>" class="video-card-link">
                                             <div class="video-card">
-                                                <div class="video-card-img-wrapper" style="background-image: url('<?php echo htmlspecialchars($video['thumbnail_url'] ?? 'https://via.placeholder.com/480x270?text=Video'); ?>');">
+                                                <div class="video-card-img-wrapper" style="background-image: url('<?php echo htmlspecialchars($video['thumbnail_url'] ?: 'https://via.placeholder.com/480x270?text=Video'); ?>');">
                                                     <i class="fas fa-play-circle play-icon"></i>
                                                 </div>
                                                 <div class="video-card-body">
