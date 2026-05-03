@@ -56,6 +56,7 @@ $migration_files = [
     __DIR__ . '/add_thumbnail_columns.sql',
     */
     __DIR__ . '/add_daily_room_column.sql', // Daily.co migration
+    __DIR__ . '/add_kingschat_column.sql', // KingsChat migration
     // Add other migration files here in order
 ];
 

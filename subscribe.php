@@ -84,6 +84,19 @@ include 'includes/navbar.php';
                     <h3>Complete Your Subscription</h3>
                 </div>
                 <div class="card-body">
+                    <!-- Espees Instant Payment (New) -->
+                    <div id="espees-button-container" class="mb-4 text-center">
+                        <h5>Fastest Method: Pay with Espees</h5>
+                        <p class="small text-muted">Activation is instant!</p>
+                        <div id="espees-button" style="max-width: 300px; margin: 0 auto;"></div>
+                    </div>
+
+                    <div class="hr-theme-slash-2 mb-4">
+                        <div class="hr-line"></div>
+                        <div class="hr-icon"><small class="text-muted">OR PAY MANUALLY</small></div>
+                        <div class="hr-line"></div>
+                    </div>
+
                     <form action="process_subscription.php" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token()); ?>">
                         <input type="hidden" name="subscription_type" id="subscription_type">
@@ -113,11 +126,33 @@ include 'includes/navbar.php';
     </div>
 </div>
 
+<script src="assets/js/espees-sdk.js?v=<?php echo time(); ?>"></script>
 <script>
 function selectPlan(plan, amount) {
     document.getElementById('subscription_type').value = plan;
     document.getElementById('amount').value = amount;
     document.getElementById('payment-form-container').style.display = 'block';
+
+    // Initialize Espees Instant Payment
+    if (window.Espees) {
+        Espees.init({
+            amount: amount,
+            sku: "sub_" + plan,
+            narration: "Virtual Praise Room - " + plan + " Subscription",
+            merchant_wallet: "<?php echo ESPEES_MERCHANT_WALLET; ?>",
+            success_url: window.location.origin + "/api/espees_callback.php?status=success&plan=" + plan,
+            fail_url: window.location.origin + "/subscribe.php?error=payment_failed",
+            token: "<?php echo ESPEES_API_KEY; ?>", // Proxy handles the real security
+            callback_url: window.location.origin + "/api/espees_callback.php",
+            user_data: {
+                user_id: "<?php echo $_SESSION['user_id']; ?>",
+                plan: plan
+            }
+        });
+        
+        // Store plan in session via a small hidden request to help the callback
+        fetch('api/store_pending_plan.php?plan=' + plan);
+    }
 }
 </script>
 

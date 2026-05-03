@@ -8,6 +8,8 @@ if (session_status() == PHP_SESSION_NONE) {
     session_init();
 }
 
+require_once 'includes/config.php';
+
 // Function to validate remember me cookie
 function validateRememberMe($conn) {
     if (isset($_COOKIE['remember_me']) && !isset($_SESSION['user_id'])) {
@@ -270,6 +272,20 @@ $body_classes = "d-flex justify-content-center align-items-center min-vh-100";
                         <button type="submit" class="btn btn-primary-custom">Login</button>
                     </div>
                 </form>
+
+                <!-- KingsChat Login Button -->
+                <div class="text-center mt-3">
+                    <div class="hr-theme-slash-2">
+                        <div class="hr-line"></div>
+                        <div class="hr-icon"><small class="text-muted">OR</small></div>
+                        <div class="hr-line"></div>
+                    </div>
+                    <button id="kingschat-login" class="btn btn-outline-primary w-100 mt-2" style="background-color: #007bff; color: white; border: none;">
+                        <img src="https://kingsch.at/favicon.ico" alt="KC" style="height: 20px; margin-right: 10px;">
+                        Login with KingsChat
+                    </button>
+                </div>
+
                 <div class="text-center mt-3">
                     <a href="forgot_password.php">Forgot password?</a>
                 </div>
@@ -280,6 +296,12 @@ $body_classes = "d-flex justify-content-center align-items-center min-vh-100";
         </div>
     </div>
 
+    <!-- KingsChat SDK (Browser-ready via esm.sh) -->
+    <script type="module">
+        import kingsChatWebSdk from 'https://esm.sh/kingschat-web-sdk';
+        window.kingsChatWebSdk = kingsChatWebSdk;
+        console.log('KingsChat SDK Status: Loaded via esm.sh');
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const togglePassword = document.getElementById('togglePassword');
@@ -287,16 +309,57 @@ $body_classes = "d-flex justify-content-center align-items-center min-vh-100";
 
             if (togglePassword && password) {
                 togglePassword.addEventListener('click', function () {
-                    // Toggle the type attribute
                     const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
                     password.setAttribute('type', type);
-
-                    // Toggle the eye icon
                     const eyeIcon = this.querySelector('i');
                     eyeIcon.classList.toggle('fa-eye');
                     eyeIcon.classList.toggle('fa-eye-slash');
                 });
             }
+
+            // KingsChat Login Logic
+            const kcBtn = document.getElementById('kingschat-login');
+            if (kcBtn) {
+                kcBtn.addEventListener('click', function() {
+                    const clientId = '<?php echo defined("KINGSCHAT_CLIENT_ID") ? KINGSCHAT_CLIENT_ID : ""; ?>';
+
+                    if (typeof kingsChatWebSdk === 'undefined') {
+                        alert("KingsChat SDK is still loading or failed to load. Please try again in a moment.");
+                        return;
+                    }
+
+                    const loginOptions = {
+                        scopes: ['user', 'user_profile'],
+                        clientId: clientId
+                    };
+
+                    console.log('Launching KingsChat Login with Client ID:', clientId);
+
+                    kingsChatWebSdk.login(loginOptions)
+                        .then(tokenResponse => {
+                            console.log('Success! Received Token:', tokenResponse.accessToken);
+                            // Send token to our backend
+                            return fetch('kingschat_auth.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ access_token: tokenResponse.accessToken })
+                            });
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                window.location.href = 'dashboard.php';
+                            } else {
+                                alert("Login failed: " + data.message);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('KingsChat SDK Error:', error);
+                            alert("KingsChat login encountered an error. Check console for details.");
+                        });
+                });
+            }
         });
     </script>
+
     <?php include 'includes/footer.php'; ?>
